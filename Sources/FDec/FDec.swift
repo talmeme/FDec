@@ -13,6 +13,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Foundation
+import Synchronization
 
 /// A fixed decimal number format.
 ///
@@ -36,22 +37,61 @@ public struct FDec: Sendable {
 
 extension FDec {
 
+	// MARK: Private - Helper for concurrency-safety.
+
+        private struct VarGroup {
+            var decimalPlaces: Int
+            var pow: Int
+            var zeroShift: String
+            var intMaxDecimals: Int
+
+            init(_ decimalPlaces: Int) {
+                self.decimalPlaces = decimalPlaces
+                self.pow = decimalPlaces.pow10()
+                self.zeroShift = String(repeating: "0", count: decimalPlaces)
+                self.intMaxDecimals = 19 - decimalPlaces
+            }
+        }
+
 	// MARK: Public Static - Project based config & helpers
 
 	/// Project-based setting that lets you set the number of decimal places.
 	///
-        // Just default to 8 so as not to offend the concurrency gods while trying to set this var in app code.
-	public static var decimalPlaces: Int = 8 {
-		didSet {
-			pow = decimalPlaces.pow10()
-			zeroShift = String(repeating: "0", count: decimalPlaces)
-			intMaxDecimals = 19 - decimalPlaces
-		}
-	}
+        private static let varGroup: Mutex<VarGroup> = .init(VarGroup(4))
+        public static var decimalPlaces: Int {
+            get {
+                varGroup.withLock { value in
+                    value.decimalPlaces
+                }
+            }
+            set {
+                varGroup.withLock { value in
+                    value = VarGroup(newValue)
+                }
+            }
+        }
 
-	public static var pow = decimalPlaces.pow10()
-	public static var zeroShift = String(repeating: "0", count: decimalPlaces)
-	public static var intMaxDecimals = 19 - decimalPlaces
+	public static var pow: Int {
+            get {
+                varGroup.withLock { value in
+                    value.pow
+                }
+            }
+        }
+	public static var zeroShift: String {
+            get {
+                varGroup.withLock { value in
+                    value.zeroShift
+                }
+            }
+        }
+	public static var intMaxDecimals: Int {
+            get {
+                varGroup.withLock { value in
+                    value.intMaxDecimals
+                }
+            }
+        }
 
 	public static let zero = FDec()
 	public static let infinity = FDec(raw: Int.max)
