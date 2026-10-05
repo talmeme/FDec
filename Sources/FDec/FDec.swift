@@ -40,7 +40,8 @@ extension FDec {
 
 	/// Project-based setting that lets you set the number of decimal places.
 	///
-	public static var decimalPlaces: Int = 4 {
+        // Just default to 8 so as not to offend the concurrency gods while trying to set this var in app code.
+	public static var decimalPlaces: Int = 8 {
 		didSet {
 			pow = decimalPlaces.pow10()
 			zeroShift = String(repeating: "0", count: decimalPlaces)
