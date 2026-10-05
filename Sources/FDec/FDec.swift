@@ -504,7 +504,12 @@ extension FDec: Codable {
 
 public extension FDec {
 	func sqrt() -> FDec {
+#if canImport(Darwin)
 		let root = Darwin.sqrt(asDouble)
+#endif
+#if canImport(SwiftGlibc)
+		let root = SwiftGlibc.sqrt(asDouble)
+#endif
 		return FDec(truncating: root)
 	}
 }
