@@ -40,10 +40,10 @@ extension FDec {
 	// MARK: Private - Helper for concurrency-safety.
 
         private struct VarGroup {
-            var decimalPlaces: Int
-            var pow: Int
-            var zeroShift: String
-            var intMaxDecimals: Int
+            let decimalPlaces: Int
+            let pow: Int
+            let zeroShift: String
+            let intMaxDecimals: Int
 
             init(_ decimalPlaces: Int) {
                 self.decimalPlaces = decimalPlaces
