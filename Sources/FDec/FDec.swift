@@ -16,7 +16,7 @@ import Foundation
 
 /// A fixed decimal number format.
 ///
-public struct FDec {
+public struct FDec: Sendable {
 
 	/// The value actually shifted & stored inernaly
 	private(set) var value: Int
